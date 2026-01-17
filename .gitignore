@@ -1,0 +1,15 @@
+.DS_Store
+node_modules/
+dist/
+.vite/
+*.log
+.venv*/
+
+# Generated media/data
+rally.mp4
+frames/
+vision/outputs/
+vision/annotations/
+
+# Viewer data exports (keep sample data if you want to commit it)
+viewer/public/data/*.json

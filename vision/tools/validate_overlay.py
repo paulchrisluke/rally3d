@@ -10,6 +10,14 @@ import numpy as np
 COURT_HALF_WIDTH = 4.115
 COURT_HALF_LENGTH = 11.885
 SERVICE_LINE = 6.40
+ROOT_DIR = Path(__file__).resolve().parents[2]
+
+
+def resolve_path(path_str: str) -> Path:
+    path = Path(path_str)
+    if path.is_absolute():
+        return path
+    return (ROOT_DIR / path).resolve()
 
 
 def load_homography(court_json_path: Path) -> np.ndarray:
@@ -33,12 +41,20 @@ def court_lines():
 
 def main():
     parser = argparse.ArgumentParser(description="Overlay court lines for calibration validation.")
-    parser.add_argument("--frame", required=True, help="Frame to draw overlay on.")
-    parser.add_argument("--court-json", default="../outputs/court.json", help="Path to court.json.")
+    parser.add_argument("--frame", default=None, help="Frame to draw overlay on (relative to repo root).")
+    parser.add_argument("--frames-dir", default="frames", help="Frames dir for default frame (relative to repo root).")
+    parser.add_argument("--court-json", default="vision/outputs/court.json", help="Path to court.json (relative to repo root).")
     parser.add_argument("--output", default=None, help="Optional output image path.")
     args = parser.parse_args()
 
-    frame_path = Path(args.frame)
+    frames_dir = resolve_path(args.frames_dir)
+    if args.frame:
+        frame_path = resolve_path(args.frame)
+    else:
+        frames = sorted(frames_dir.glob("frame_*.jpg"))
+        if not frames:
+            raise SystemExit("No frames found. Provide --frame explicitly.")
+        frame_path = frames[len(frames) // 2]
     if not frame_path.exists():
         raise SystemExit(f"Frame not found: {frame_path}")
 
@@ -46,7 +62,7 @@ def main():
     if frame is None:
         raise SystemExit(f"Failed to read frame: {frame_path}")
 
-    court_json_path = Path(args.court_json)
+    court_json_path = resolve_path(args.court_json)
     if not court_json_path.exists():
         raise SystemExit(f"Court JSON not found: {court_json_path}")
 
@@ -64,10 +80,12 @@ def main():
     blended = cv2.addWeighted(overlay, 0.7, frame, 0.3, 0)
 
     if args.output:
-        out_path = Path(args.output)
+        out_path = resolve_path(args.output)
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        cv2.imwrite(str(out_path), blended)
-        print(f"Saved overlay: {out_path}")
+        if cv2.imwrite(str(out_path), blended):
+            print(f"Saved overlay: {out_path}")
+        else:
+            raise SystemExit(f"Failed to write image: {out_path}")
     else:
         window = "rally3d court overlay"
         cv2.namedWindow(window, cv2.WINDOW_NORMAL)

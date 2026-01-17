@@ -2,24 +2,10 @@
   "fps": 30,
   "hits": [
     {
-      "frame": 0,
-      "t": 0.0,
-      "player": "A"
-    },
-    {
-      "frame": 60,
-      "t": 2.0,
+      "frame": 140,
+      "t": 4.666667,
       "player": "B"
     }
   ],
-  "bounces": [
-    {
-      "frame": 30,
-      "t": 1.0
-    },
-    {
-      "frame": 90,
-      "t": 3.0
-    }
-  ]
+  "bounces": []
 }

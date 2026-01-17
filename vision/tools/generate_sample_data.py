@@ -8,6 +8,14 @@ from pathlib import Path
 COURT_HALF_WIDTH = 4.115
 COURT_HALF_LENGTH = 11.885
 NET_HEIGHT = 0.914
+ROOT_DIR = Path(__file__).resolve().parents[2]
+
+
+def resolve_path(path_str: str) -> Path:
+    path = Path(path_str)
+    if path.is_absolute():
+        return path
+    return (ROOT_DIR / path).resolve()
 
 
 def make_court_json(fps: int, frame_count: int):
@@ -111,10 +119,10 @@ def main():
     parser = argparse.ArgumentParser(description="Generate sample JSON outputs for the viewer.")
     parser.add_argument("--fps", type=int, default=30)
     parser.add_argument("--frame-count", type=int, default=120)
-    parser.add_argument("--output-dir", default="../outputs")
+    parser.add_argument("--output-dir", default="vision/outputs")
     args = parser.parse_args()
 
-    output_dir = Path(args.output_dir)
+    output_dir = resolve_path(args.output_dir)
     fps = int(args.fps)
     frame_count = int(args.frame_count)
 

@@ -10,6 +10,20 @@ import numpy as np
 COURT_HALF_WIDTH = 4.115
 COURT_HALF_LENGTH = 11.885
 NET_HEIGHT = 0.914
+ROOT_DIR = Path(__file__).resolve().parents[2]
+POINT_LABELS = [
+    "near-left (singles)",
+    "near-right (singles)",
+    "far-right (singles)",
+    "far-left (singles)",
+]
+
+
+def resolve_path(path_str: str) -> Path:
+    path = Path(path_str)
+    if path.is_absolute():
+        return path
+    return (ROOT_DIR / path).resolve()
 
 
 def count_frames(frames_dir: Path) -> int:
@@ -17,11 +31,24 @@ def count_frames(frames_dir: Path) -> int:
         return 0
     return len(list(frames_dir.glob("frame_*.jpg")))
 
+def pick_default_frame(frames_dir: Path) -> Path:
+    frames = sorted(frames_dir.glob("frame_*.jpg"))
+    if not frames:
+        raise SystemExit("No frames found. Provide --frame explicitly.")
+    return frames[len(frames) // 2]
+
 
 def draw_instructions(img, points):
-    text = "Click 4 corners: near-left, near-right, far-right, far-left"
-    cv2.putText(img, text, (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 4)
-    cv2.putText(img, text, (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
+    text = "Click singles corners clockwise: near-left -> near-right -> far-right -> far-left"
+    cv2.putText(img, text, (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 4)
+    cv2.putText(img, text, (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+    text2 = "Near = bottom of image. Use inner (singles) sidelines."
+    cv2.putText(img, text2, (20, 56), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 4)
+    cv2.putText(img, text2, (20, 56), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+    next_label = POINT_LABELS[len(points)] if len(points) < len(POINT_LABELS) else "done"
+    text3 = f"Next click: {next_label}"
+    cv2.putText(img, text3, (20, 82), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 4)
+    cv2.putText(img, text3, (20, 82), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
     for idx, (x, y) in enumerate(points):
         cv2.circle(img, (int(x), int(y)), 6, (0, 255, 0), -1)
         cv2.putText(img, str(idx + 1), (int(x) + 8, int(y) - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 3)
@@ -30,16 +57,22 @@ def draw_instructions(img, points):
 
 def main():
     parser = argparse.ArgumentParser(description="Manual court calibration tool.")
-    parser.add_argument("--frame", required=True, help="Path to a representative frame.")
-    parser.add_argument("--frames-dir", default="../frames", help="Frames dir for frame_count.")
+    parser.add_argument("--frame", default=None, help="Path to a representative frame (relative to repo root).")
+    parser.add_argument("--frames-dir", default="frames", help="Frames dir for frame_count/default frame (relative to repo root).")
     parser.add_argument("--fps", type=int, default=30, help="Frames per second.")
     parser.add_argument("--frame-count", type=int, default=None, help="Override frame count.")
-    parser.add_argument("--output", default="../outputs/court.json", help="Output court.json path.")
+    parser.add_argument("--output", default="vision/outputs/court.json", help="Output court.json path (relative to repo root).")
     args = parser.parse_args()
 
-    frame_path = Path(args.frame)
+    frames_dir = resolve_path(args.frames_dir)
+    frame_path = resolve_path(args.frame) if args.frame else pick_default_frame(frames_dir)
     if not frame_path.exists():
         raise SystemExit(f"Frame not found: {frame_path}")
+
+    print("Manual calibration: click singles court corners clockwise.")
+    print("Order: near-left -> near-right -> far-right -> far-left.")
+    print("Near = bottom of image. Use inner (singles) sidelines.")
+    print("Press ESC to cancel.")
 
     frame = cv2.imread(str(frame_path))
     if frame is None:
@@ -81,7 +114,6 @@ def main():
 
     homography = cv2.getPerspectiveTransform(points_img_np, points_court)
 
-    frames_dir = Path(args.frames_dir)
     frame_count = args.frame_count
     if frame_count is None:
         frame_count = count_frames(frames_dir)
@@ -106,7 +138,7 @@ def main():
         "homography_img_to_court": homography.tolist(),
     }
 
-    output_path = Path(args.output)
+    output_path = resolve_path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8") as f:
         json.dump(output, f, indent=2)

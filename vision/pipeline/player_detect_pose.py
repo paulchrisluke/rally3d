@@ -4,7 +4,7 @@ import sys
 
 def main():
     print("player_detect_pose.py is a stub. Wire this to MediaPipe or YOLOv8-pose.")
-    print("Tip: run vision/tools/generate_sample_data.py to create placeholder outputs.")
+    print("Tip: use vision/tools/annotate_points.py for manual keyframes.")
     return 1
 
 

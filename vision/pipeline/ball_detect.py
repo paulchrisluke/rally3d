@@ -4,7 +4,7 @@ import sys
 
 def main():
     print("ball_detect.py is a stub. Add your 2D detector or use TrackNet/YOLO.")
-    print("Tip: run vision/tools/generate_sample_data.py to create placeholder outputs.")
+    print("Tip: use vision/tools/annotate_points.py for manual keyframes.")
     return 1
 
 
