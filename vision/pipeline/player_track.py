@@ -4,6 +4,16 @@ import json
 from pathlib import Path
 
 
+ROOT_DIR = Path(__file__).resolve().parents[2]
+
+
+def resolve_path(path_str: str) -> Path:
+    path = Path(path_str)
+    if path.is_absolute():
+        return path
+    return (ROOT_DIR / path).resolve()
+
+
 def load_annotations(path: Path):
     if not path.exists():
         raise SystemExit(f"Annotations not found: {path}")
@@ -27,8 +37,8 @@ def apply_homography(h, u, v):
     x = h[0][0] * u + h[0][1] * v + h[0][2]
     y = h[1][0] * u + h[1][1] * v + h[1][2]
     w = h[2][0] * u + h[2][1] * v + h[2][2]
-    if w == 0:
-        return 0.0, 0.0
+    if abs(w) < 1e-9:
+        raise ValueError(f"Degenerate homography: w={w} at ({u}, {v})")
     return x / w, y / w
 
 
@@ -73,20 +83,26 @@ def interpolate_points(points):
 
 def main():
     parser = argparse.ArgumentParser(description="Generate players.json from manual annotations.")
-    parser.add_argument("--annotations", default="../annotations/points.json", help="Annotation JSON path.")
-    parser.add_argument("--court-json", default="../outputs/court.json", help="court.json path.")
-    parser.add_argument("--output", default="../outputs/players.json", help="Output players.json path.")
+    parser.add_argument("--annotations", default="vision/annotations/points.json", help="Annotation JSON path (relative to repo root).")
+    parser.add_argument("--court-json", default="vision/outputs/court.json", help="court.json path (relative to repo root).")
+    parser.add_argument("--output", default="vision/outputs/players.json", help="Output players.json path (relative to repo root).")
     parser.add_argument("--fps", type=int, default=None, help="Override fps.")
     parser.add_argument("--height-a", type=float, default=1.8, help="Height for player A.")
     parser.add_argument("--height-b", type=float, default=1.85, help="Height for player B.")
     args = parser.parse_args()
 
-    data, frames = load_annotations(Path(args.annotations))
+    annotations_path = resolve_path(args.annotations)
+    court_json_path = resolve_path(args.court_json)
+    output_path = resolve_path(args.output)
+
+    data, frames = load_annotations(annotations_path)
     fps = int(args.fps or data.get("fps", 30))
+    if fps <= 0:
+        raise SystemExit(f"Invalid fps value: {fps}. Must be positive.")
     frame_count = int(data.get("frame_count", len(frames)))
     frame_count = min(frame_count, len(frames))
 
-    homography = load_homography(Path(args.court_json))
+    homography = load_homography(court_json_path)
     if homography is None:
         raise SystemExit("homography_img_to_court missing in court.json")
 
@@ -122,7 +138,6 @@ def main():
         "frames": output_frames,
     }
 
-    output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8") as f:
         json.dump(output, f, indent=2)

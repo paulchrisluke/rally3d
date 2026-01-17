@@ -10,6 +10,14 @@ LABELS = [
     ("B", (255, 120, 120)),
     ("ball", (0, 220, 220)),
 ]
+ROOT_DIR = Path(__file__).resolve().parents[2]
+
+
+def resolve_path(path_str: str) -> Path:
+    path = Path(path_str)
+    if path.is_absolute():
+        return path
+    return (ROOT_DIR / path).resolve()
 
 
 def load_frames(frames_dir: Path):
@@ -99,15 +107,16 @@ def draw_overlay(img, frame_index, frame_count, active_label, frame_data, frame_
 
 def main():
     parser = argparse.ArgumentParser(description="Annotate player/ball points per frame.")
-    parser.add_argument("--frames-dir", default="../frames", help="Directory with frame_*.jpg files.")
-    parser.add_argument("--output", default="../annotations/points.json", help="Output annotation JSON.")
+    parser.add_argument("--frames-dir", default="frames", help="Directory with frame_*.jpg files (relative to repo root).")
+    parser.add_argument("--output", default="vision/annotations/points.json", help="Output annotation JSON (relative to repo root).")
     parser.add_argument("--fps", type=int, default=30, help="Frames per second.")
     args = parser.parse_args()
 
-    frames_dir = Path(args.frames_dir)
+    frames_dir = resolve_path(args.frames_dir)
     frames = load_frames(frames_dir)
     frame_count = len(frames)
-    frames_data = load_existing(Path(args.output), frame_count)
+    output_path = resolve_path(args.output)
+    frames_data = load_existing(output_path, frame_count)
 
     current_index = 0
     active_label = None
@@ -133,10 +142,10 @@ def main():
 
         key = cv2.waitKey(20) & 0xFF
         if key == 27 or key == ord("q"):
-            save_annotations(Path(args.output), args.fps, frame_count, frames_data)
+            save_annotations(output_path, args.fps, frame_count, frames_data)
             break
         if key == ord("s"):
-            save_annotations(Path(args.output), args.fps, frame_count, frames_data)
+            save_annotations(output_path, args.fps, frame_count, frames_data)
         elif key == ord("n"):
             current_index = min(current_index + 1, frame_count - 1)
         elif key == ord("p"):
@@ -151,7 +160,7 @@ def main():
             active_label = "ball"
 
     cv2.destroyAllWindows()
-    print(f"Saved annotations to: {args.output}")
+    print(f"Saved annotations to: {output_path}")
 
 
 if __name__ == "__main__":

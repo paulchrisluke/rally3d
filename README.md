@@ -46,6 +46,15 @@ python calibrate_manual.py
 python validate_overlay.py
 ```
 
+Calibration click order (singles court, clockwise):
+
+1. near-left
+2. near-right
+3. far-right
+4. far-left
+
+Near = bottom of image. Use inner (singles) sidelines, not the doubles lines.
+
 ### Manual annotation pipeline
 
 ```bash

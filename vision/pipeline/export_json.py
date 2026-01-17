@@ -8,6 +8,14 @@ import sys
 
 REQUIRED_FILES = ["court.json", "players.json", "ball.json", "events.json"]
 OPTIONAL_FILES = ["ball_2d.json"]
+ROOT_DIR = Path(__file__).resolve().parents[2]
+
+
+def resolve_path(path_str: str) -> Path:
+    path = Path(path_str)
+    if path.is_absolute():
+        return path
+    return (ROOT_DIR / path).resolve()
 
 
 def ensure_sample_data(src_dir: Path):
@@ -19,13 +27,13 @@ def ensure_sample_data(src_dir: Path):
 
 def main():
     parser = argparse.ArgumentParser(description="Copy outputs to viewer/public/data.")
-    parser.add_argument("--src", default="../outputs", help="Source output dir.")
-    parser.add_argument("--dest", default="../../viewer/public/data", help="Destination dir.")
+    parser.add_argument("--src", default="vision/outputs", help="Source output dir (relative to repo root).")
+    parser.add_argument("--dest", default="viewer/public/data", help="Destination dir (relative to repo root).")
     parser.add_argument("--generate-sample", action="store_true", help="Generate sample data if missing.")
     args = parser.parse_args()
 
-    src_dir = Path(args.src)
-    dest_dir = Path(args.dest)
+    src_dir = resolve_path(args.src)
+    dest_dir = resolve_path(args.dest)
     dest_dir.mkdir(parents=True, exist_ok=True)
 
     if args.generate_sample:

@@ -3,6 +3,7 @@ node_modules/
 dist/
 .vite/
 *.log
+.venv*/
 
 # Generated media/data
 rally.mp4

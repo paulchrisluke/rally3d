@@ -4,6 +4,16 @@ import json
 from pathlib import Path
 
 
+ROOT_DIR = Path(__file__).resolve().parents[2]
+
+
+def resolve_path(path_str: str) -> Path:
+    path = Path(path_str)
+    if path.is_absolute():
+        return path
+    return (ROOT_DIR / path).resolve()
+
+
 def load_annotations(path: Path):
     if not path.exists():
         raise SystemExit(f"Annotations not found: {path}")
@@ -56,13 +66,18 @@ def interpolate_points(points):
 
 def main():
     parser = argparse.ArgumentParser(description="Generate ball_2d.json from manual annotations.")
-    parser.add_argument("--annotations", default="../annotations/points.json", help="Annotation JSON path.")
-    parser.add_argument("--output", default="../outputs/ball_2d.json", help="Output ball_2d.json path.")
+    parser.add_argument("--annotations", default="vision/annotations/points.json", help="Annotation JSON path (relative to repo root).")
+    parser.add_argument("--output", default="vision/outputs/ball_2d.json", help="Output ball_2d.json path (relative to repo root).")
     parser.add_argument("--fps", type=int, default=None, help="Override fps.")
     args = parser.parse_args()
 
-    data, frames = load_annotations(Path(args.annotations))
+    annotations_path = resolve_path(args.annotations)
+    output_path = resolve_path(args.output)
+
+    data, frames = load_annotations(annotations_path)
     fps = int(args.fps or data.get("fps", 30))
+    if fps <= 0:
+        raise SystemExit(f"Invalid fps value: {fps}. Must be positive.")
     frame_count = int(data.get("frame_count", len(frames)))
     frame_count = min(frame_count, len(frames))
 
@@ -86,7 +101,6 @@ def main():
 
     output = {"fps": fps, "frame_count": frame_count, "frames": output_frames}
 
-    output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8") as f:
         json.dump(output, f, indent=2)

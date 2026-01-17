@@ -5,6 +5,16 @@ import math
 from pathlib import Path
 
 
+ROOT_DIR = Path(__file__).resolve().parents[2]
+
+
+def resolve_path(path_str: str) -> Path:
+    path = Path(path_str)
+    if path.is_absolute():
+        return path
+    return (ROOT_DIR / path).resolve()
+
+
 def load_json(path: Path):
     if not path.exists():
         raise SystemExit(f"File not found: {path}")
@@ -24,8 +34,8 @@ def apply_homography(h, u, v):
     x = h[0][0] * u + h[0][1] * v + h[0][2]
     y = h[1][0] * u + h[1][1] * v + h[1][2]
     w = h[2][0] * u + h[2][1] * v + h[2][2]
-    if w == 0:
-        return 0.0, 0.0
+    if abs(w) < 1e-9:
+        raise ValueError(f"Degenerate homography: w={w} at ({u}, {v})")
     return x / w, y / w
 
 
@@ -130,31 +140,41 @@ def load_players(players_path: Path, frame_count: int):
         frame = frames[i]
         mapping = {}
         for p in frame.get("players", []):
-            mapping[p.get("id")] = (p.get("x", 0.0), p.get("y", 0.0))
+            pid = p.get("id")
+            if pid is not None:
+                mapping[pid] = (p.get("x", 0.0), p.get("y", 0.0))
         players_by_frame.append(mapping)
     return players_by_frame
 
 
 def main():
     parser = argparse.ArgumentParser(description="Estimate ball 3D trajectory from ball_2d.json.")
-    parser.add_argument("--ball-2d", default="../outputs/ball_2d.json", help="ball_2d.json path.")
-    parser.add_argument("--court-json", default="../outputs/court.json", help="court.json path.")
-    parser.add_argument("--players-json", default="../outputs/players.json", help="players.json path (optional).")
-    parser.add_argument("--ball-output", default="../outputs/ball.json", help="Output ball.json path.")
-    parser.add_argument("--events-output", default="../outputs/events.json", help="Output events.json path.")
+    parser.add_argument("--ball-2d", default="vision/outputs/ball_2d.json", help="ball_2d.json path (relative to repo root).")
+    parser.add_argument("--court-json", default="vision/outputs/court.json", help="court.json path (relative to repo root).")
+    parser.add_argument("--players-json", default="vision/outputs/players.json", help="players.json path (optional, relative to repo root).")
+    parser.add_argument("--ball-output", default="vision/outputs/ball.json", help="Output ball.json path (relative to repo root).")
+    parser.add_argument("--events-output", default="vision/outputs/events.json", help="Output events.json path (relative to repo root).")
     args = parser.parse_args()
 
-    ball_2d = load_json(Path(args.ball_2d))
+    ball_2d_path = resolve_path(args.ball_2d)
+    court_json_path = resolve_path(args.court_json)
+    players_json_path = resolve_path(args.players_json)
+    ball_output_path = resolve_path(args.ball_output)
+    events_output_path = resolve_path(args.events_output)
+
+    ball_2d = load_json(ball_2d_path)
     frames = ball_2d.get("frames", [])
     if not frames:
         raise SystemExit("ball_2d.json has no frames")
 
     fps = int(ball_2d.get("fps", 30))
+    if fps <= 0:
+        raise SystemExit(f"Invalid fps value: {fps}. Must be positive.")
     frame_count = int(ball_2d.get("frame_count", len(frames)))
     frame_count = min(frame_count, len(frames))
     frames = frames[:frame_count]
 
-    homography = load_homography(Path(args.court_json))
+    homography = load_homography(court_json_path)
 
     u_values = []
     v_values = []
@@ -200,19 +220,19 @@ def main():
             }
         )
 
-    players_by_frame = load_players(Path(args.players_json), frame_count)
+    players_by_frame = load_players(players_json_path, frame_count)
     bounces = detect_bounces(z_smoothed, fps)
     hits = detect_hits(xyz, fps, players_by_frame)
 
     ball_output = {"fps": fps, "frame_count": frame_count, "frames": output_frames}
     events_output = {"fps": fps, "hits": hits, "bounces": bounces}
 
-    ball_path = Path(args.ball_output)
+    ball_path = ball_output_path
     ball_path.parent.mkdir(parents=True, exist_ok=True)
     with ball_path.open("w", encoding="utf-8") as f:
         json.dump(ball_output, f, indent=2)
 
-    events_path = Path(args.events_output)
+    events_path = events_output_path
     events_path.parent.mkdir(parents=True, exist_ok=True)
     with events_path.open("w", encoding="utf-8") as f:
         json.dump(events_output, f, indent=2)
