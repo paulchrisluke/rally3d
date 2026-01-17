@@ -1,5 +1,7 @@
 # rally3d — MVP Build Plan
 
+Last updated: 2026-01-17
+
 ## 0. MVP Goal
 
 **Input:** 8-second tennis rally clip (8:28–8:36) from broadcast video  
@@ -44,7 +46,7 @@ Court dimensions are real tennis values (singles) in meters:
 * `court.json`
 * `players.json`
 * `ball.json`
-* `events.json` (optional but recommended)
+* `events.json` (required)
 
 All outputs must share:
 
@@ -236,7 +238,7 @@ If detection fails on a frame, fill with:
 * Extract full skeleton keypoints, focusing on:
   * Ankles/feet for ground contact
   * Center of mass for body position
-  * Optional: racket hand for hit detection
+  * Include racket hand for hit detection
 
 **Alternative (simpler):**
 
@@ -349,14 +351,14 @@ Use a staged approach; start simple and upgrade only if needed.
 * Predict next position based on velocity
 * Associate detections with predictions using nearest-neighbor + distance threshold
 * Bridge gaps with interpolation (up to 5 frames)
-* Optional: Re-detect when confidence drops or prediction error is high
+* Re-detect when confidence drops or prediction error is high
 
 **Handle missed detections:**
 
 * Short gaps (1-5 frames): Linear interpolation
 * Long gaps: Flag for manual review or trajectory fitting
 
-### 8.3 Output: `ball_2d.json` (internal, optional)
+### 8.3 Output: `ball_2d.json` (internal, required)
 
 Not required by viewer; used for debugging and 3D fitting.
 
@@ -448,7 +450,7 @@ Not required by viewer; used for debugging and 3D fitting.
 
 ---
 
-## 10. Events (Optional but recommended)
+## 10. Events (Required)
 
 **Infer:**
 
@@ -465,7 +467,7 @@ Not required by viewer; used for debugging and 3D fitting.
 * **Hit detection:**
   * Distance from ball to player < 1.5 m
   * Significant change in ball velocity direction (> 90°)
-  * Optional: Ball is within racket swing zone
+  * Ball is within racket swing zone
 
 ### Output: `events.json`
 
@@ -586,7 +588,7 @@ function animate(time) {
 * Button to toggle isPlaying state
 * Keyboard shortcut: Space bar
 
-**Event Markers (optional):**
+**Event Markers:**
 
 * Visual markers on timeline for hits and bounces
 * Click marker to jump to that frame
@@ -662,7 +664,7 @@ Follow this sequence strictly:
 10. **Viewer: Timeline + camera**
     * Add timeline scrubber
     * Wire up OrbitControls
-    * Add event markers (optional)
+    * Add event markers
 
 ---
 

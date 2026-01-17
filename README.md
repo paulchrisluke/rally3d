@@ -1,5 +1,7 @@
 # rally3d
 
+Last updated: 2026-01-17
+
 MVP pipeline + viewer to replay a single tennis rally in simplified 3D.
 
 ## What's here
