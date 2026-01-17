@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>rally3d viewer</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="three-canvas"></canvas>
+      <div id="status">Loading data...</div>
+      <div id="hud">
+        <div class="hud-header">
+          <div class="title">rally3d</div>
+          <div class="subtitle">Single-rally 3D replay</div>
+        </div>
+        <div class="controls">
+          <button id="play-pause" type="button">Play</button>
+          <div class="timeline-wrap">
+            <input type="range" id="timeline" min="0" max="0" value="0" />
+            <div id="timeline-markers"></div>
+          </div>
+          <span id="time-display">0.00s / 0.00s</span>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

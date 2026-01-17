@@ -1,0 +1,35 @@
+{
+  "fps": 30,
+  "frame_count": 120,
+  "coordinate_system": {
+    "origin": "net_center",
+    "axes": {
+      "x": "right_sideline",
+      "y": "toward_far_baseline",
+      "z": "up"
+    },
+    "units": "meters"
+  },
+  "court_dims_m": {
+    "half_width_singles": 4.115,
+    "half_length": 11.885,
+    "net_height": 0.914
+  },
+  "homography_img_to_court": [
+    [
+      1.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      1.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ]
+}
