@@ -33,12 +33,20 @@ def court_lines():
 
 def main():
     parser = argparse.ArgumentParser(description="Overlay court lines for calibration validation.")
-    parser.add_argument("--frame", required=True, help="Frame to draw overlay on.")
+    parser.add_argument("--frame", default=None, help="Frame to draw overlay on.")
+    parser.add_argument("--frames-dir", default="../frames", help="Frames dir for default frame.")
     parser.add_argument("--court-json", default="../outputs/court.json", help="Path to court.json.")
     parser.add_argument("--output", default=None, help="Optional output image path.")
     args = parser.parse_args()
 
-    frame_path = Path(args.frame)
+    frames_dir = Path(args.frames_dir)
+    if args.frame:
+        frame_path = Path(args.frame)
+    else:
+        frames = sorted(frames_dir.glob("frame_*.jpg"))
+        if not frames:
+            raise SystemExit("No frames found. Provide --frame explicitly.")
+        frame_path = frames[len(frames) // 2]
     if not frame_path.exists():
         raise SystemExit(f"Frame not found: {frame_path}")
 

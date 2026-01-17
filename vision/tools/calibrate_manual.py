@@ -17,6 +17,12 @@ def count_frames(frames_dir: Path) -> int:
         return 0
     return len(list(frames_dir.glob("frame_*.jpg")))
 
+def pick_default_frame(frames_dir: Path) -> Path:
+    frames = sorted(frames_dir.glob("frame_*.jpg"))
+    if not frames:
+        raise SystemExit("No frames found. Provide --frame explicitly.")
+    return frames[len(frames) // 2]
+
 
 def draw_instructions(img, points):
     text = "Click 4 corners: near-left, near-right, far-right, far-left"
@@ -30,14 +36,15 @@ def draw_instructions(img, points):
 
 def main():
     parser = argparse.ArgumentParser(description="Manual court calibration tool.")
-    parser.add_argument("--frame", required=True, help="Path to a representative frame.")
-    parser.add_argument("--frames-dir", default="../frames", help="Frames dir for frame_count.")
+    parser.add_argument("--frame", default=None, help="Path to a representative frame.")
+    parser.add_argument("--frames-dir", default="../frames", help="Frames dir for frame_count/default frame.")
     parser.add_argument("--fps", type=int, default=30, help="Frames per second.")
     parser.add_argument("--frame-count", type=int, default=None, help="Override frame count.")
     parser.add_argument("--output", default="../outputs/court.json", help="Output court.json path.")
     args = parser.parse_args()
 
-    frame_path = Path(args.frame)
+    frames_dir = Path(args.frames_dir)
+    frame_path = Path(args.frame) if args.frame else pick_default_frame(frames_dir)
     if not frame_path.exists():
         raise SystemExit(f"Frame not found: {frame_path}")
 
@@ -81,7 +88,6 @@ def main():
 
     homography = cv2.getPerspectiveTransform(points_img_np, points_court)
 
-    frames_dir = Path(args.frames_dir)
     frame_count = args.frame_count
     if frame_count is None:
         frame_count = count_frames(frames_dir)

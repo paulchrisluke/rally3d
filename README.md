@@ -21,8 +21,8 @@ Then open the local dev URL printed by Vite.
 ## Pipeline notes
 
 The vision pipeline is intentionally lightweight and modular. Manual court
-calibration and overlay validation are implemented; detection/tracking stages are
-stubbed and ready to be wired to your preferred models.
+calibration and overlay validation are implemented; detection/tracking can be
+driven from a manual annotation tool or wired to your preferred models.
 
 ### Download + frames
 
@@ -32,12 +32,29 @@ cd vision/scripts
 ./01_extract_frames.sh
 ```
 
+If the download fails, you can override the extractor settings:
+
+```bash
+EXTRACTOR_ARGS="youtube:player_client=android" FORMAT="best[ext=mp4]/best" ./00_download_clip.sh
+```
+
 ### Manual court calibration
 
 ```bash
 cd ../tools
-python calibrate_manual.py --frame ../frames/frame_00120.jpg
-python validate_overlay.py --frame ../frames/frame_00120.jpg
+python calibrate_manual.py
+python validate_overlay.py
+```
+
+### Manual annotation pipeline
+
+```bash
+python annotate_points.py
+cd ../pipeline
+python player_track.py
+python ball_track.py
+python ball_3d_fit.py
+python export_json.py
 ```
 
 Outputs are written to `vision/outputs/` and can be copied to

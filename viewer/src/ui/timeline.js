@@ -1,6 +1,8 @@
-export function setupTimeline({ frameCount, fps, events, onFrameChange, onPlayToggle }) {
+export function setupTimeline({ frameCount, fps, events, onFrameChange, onPlayToggle, onResetView, onSpeedChange }) {
   const timeline = document.getElementById("timeline");
   const playButton = document.getElementById("play-pause");
+  const resetButton = document.getElementById("reset-view");
+  const speedSelect = document.getElementById("speed");
   const timeDisplay = document.getElementById("time-display");
   const markers = document.getElementById("timeline-markers");
 
@@ -37,6 +39,23 @@ export function setupTimeline({ frameCount, fps, events, onFrameChange, onPlayTo
     onPlayToggle();
   });
 
+  if (resetButton) {
+    resetButton.addEventListener("click", () => {
+      if (onResetView) {
+        onResetView();
+      }
+    });
+  }
+
+  if (speedSelect) {
+    speedSelect.addEventListener("change", (event) => {
+      const value = Number(event.target.value);
+      if (onSpeedChange) {
+        onSpeedChange(value);
+      }
+    });
+  }
+
   window.addEventListener("keydown", (event) => {
     if (event.code === "Space") {
       event.preventDefault();
@@ -62,5 +81,11 @@ export function setupTimeline({ frameCount, fps, events, onFrameChange, onPlayTo
 
   updateTime(0);
 
-  return { setFrame, setPlaying };
+  function setSpeed(value) {
+    if (speedSelect) {
+      speedSelect.value = String(value);
+    }
+  }
+
+  return { setFrame, setPlaying, setSpeed };
 }

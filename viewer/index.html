@@ -16,6 +16,16 @@
         </div>
         <div class="controls">
           <button id="play-pause" type="button">Play</button>
+          <button id="reset-view" type="button">Reset View</button>
+          <label class="speed">
+            <span>Speed</span>
+            <select id="speed">
+              <option value="0.5">0.5x</option>
+              <option value="1" selected>1x</option>
+              <option value="1.5">1.5x</option>
+              <option value="2">2x</option>
+            </select>
+          </label>
           <div class="timeline-wrap">
             <input type="range" id="timeline" min="0" max="0" value="0" />
             <div id="timeline-markers"></div>

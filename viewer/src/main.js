@@ -35,12 +35,16 @@ const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
 dirLight.position.set(5, 12, -6);
 scene.add(dirLight);
 
+const cameraHome = new THREE.Vector3();
+const cameraTarget = new THREE.Vector3(0, 1.2, 0);
+
 let playersData;
 let ballData;
 let eventsData;
 let frameCount = 0;
 let fps = 30;
 let uiControls = null;
+let playbackRate = 1.0;
 
 const playersSystem = createPlayerSystem();
 scene.add(playersSystem.group);
@@ -88,6 +92,12 @@ function updateScene(frameIndex) {
   return safeIndex;
 }
 
+function resetCamera() {
+  camera.position.copy(cameraHome);
+  controls.target.copy(cameraTarget);
+  controls.update();
+}
+
 function resize() {
   const { innerWidth, innerHeight } = window;
   camera.aspect = innerWidth / innerHeight;
@@ -116,8 +126,9 @@ async function init() {
     scene.add(court);
 
     const halfLength = courtData?.court_dims_m?.half_length ?? 11.885;
-    camera.position.set(0, 8, -(halfLength + 6));
-    controls.target.set(0, 1.2, 0);
+    cameraHome.set(0, 8, -(halfLength + 6));
+    cameraTarget.set(0, 1.2, 0);
+    resetCamera();
     controls.update();
 
     uiControls = setupTimeline({
@@ -135,6 +146,12 @@ async function init() {
         if (!isPlaying) {
           lastTime = 0;
         }
+      },
+      onResetView: () => {
+        resetCamera();
+      },
+      onSpeedChange: (value) => {
+        playbackRate = Number.isFinite(value) && value > 0 ? value : 1.0;
       }
     });
 
@@ -144,6 +161,7 @@ async function init() {
     updateScene(0);
     uiControls.setFrame(0);
     uiControls.setPlaying(isPlaying);
+    uiControls.setSpeed(playbackRate);
   } catch (err) {
     console.error(err);
     setStatus("Failed to load data. Check viewer/public/data.");
@@ -164,7 +182,7 @@ function animate(time) {
     }
     const delta = (time - lastTime) / 1000;
     lastTime = time;
-    currentFrame += delta * fps;
+    currentFrame += delta * fps * playbackRate;
     if (currentFrame >= frameCount) {
       currentFrame = 0;
     }
