@@ -872,6 +872,9 @@ Ideas for v2:
 
 * Multiple rallies stitched together
 * Player skeleton animation (not just capsules)
+* Upscale layer for annotation (2x/4x zoom) to make players/ball easier to click
+* Auto detection with a human confirm/override layer for player tracking
+* True skeletons/pose to improve arm/feet placement accuracy
 * Racket detection and swing analysis
 * Ball spin visualization
 * Shot speed and trajectory metrics

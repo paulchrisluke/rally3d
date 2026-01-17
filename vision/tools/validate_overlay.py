@@ -82,8 +82,10 @@ def main():
     if args.output:
         out_path = resolve_path(args.output)
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        cv2.imwrite(str(out_path), blended)
-        print(f"Saved overlay: {out_path}")
+        if cv2.imwrite(str(out_path), blended):
+            print(f"Saved overlay: {out_path}")
+        else:
+            raise SystemExit(f"Failed to write image: {out_path}")
     else:
         window = "rally3d court overlay"
         cv2.namedWindow(window, cv2.WINDOW_NORMAL)
